@@ -1,4 +1,4 @@
-# vue_storybook
+# src
 
 ## Project setup
 ```
