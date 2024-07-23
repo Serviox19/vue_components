@@ -28,13 +28,19 @@
       <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
     </ul>
   </div>
+  <primary-button label="Hello" size="large" backgroundColor="#FFF"></primary-button>
 </template>
 
 <script>
+import PrimaryButton from './Button/Button.vue';
+
 export default {
   name: 'HelloWorld',
   props: {
     msg: String
+  },
+  components: {
+    PrimaryButton,
   }
 }
 </script>

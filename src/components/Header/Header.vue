@@ -25,9 +25,9 @@
           >Welcome, <b>{{ user.name }}</b
           >!</span
         >
-        <my-button size="small" @click="$emit('logout')" label="Log out" v-if="user" />
-        <my-button size="small" @click="$emit('login')" label="Log in" v-if="!user" />
-        <my-button
+        <primary-button size="small" @click="$emit('logout')" label="Log out" v-if="user" />
+        <primary-button size="small" @click="$emit('login')" label="Log in" v-if="!user" />
+        <primary-button
           primary
           size="small"
           @click="$emit('createAccount')"
@@ -41,19 +41,16 @@
 
 <script>
 import './header.css';
-import MyButton from '../Button/Button.vue';
+import PrimaryButton from '../Button/Button.vue';
 
 export default {
   name: 'my-header',
-
-  components: { MyButton },
-
+  components: { PrimaryButton },
   props: {
     user: {
       type: Object,
     },
   },
-
   emits: ['login', 'logout', 'createAccount'],
 };
 </script>

@@ -7,8 +7,7 @@ import './button.css';
 import { reactive, computed } from 'vue';
 
 export default {
-  name: 'my-button',
-
+  name: 'PrimaryButton',
   props: {
     label: {
       type: String,
@@ -28,9 +27,7 @@ export default {
       type: String,
     },
   },
-
   emits: ['click'],
-
   setup(props, { emit }) {
     props = reactive(props);
     return {
@@ -45,8 +42,12 @@ export default {
       })),
       onClick() {
         emit('click');
+        console.log('Button clicked');
       },
     };
+  },
+  mounted() {
+    console.log('Button mounted');
   },
 };
 </script>

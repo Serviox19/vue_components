@@ -1,10 +1,10 @@
 import { fn } from '@storybook/test';
-import MyButton from '../components/Button/Button.vue';
+import PrimaryButton from '../components/Button/Button.vue';
 
 // More on how to set up stories at: https://storybook.js.org/docs/writing-stories
 export default {
   title: 'Example/Button',
-  component: MyButton,
+  component: PrimaryButton,
   tags: ['autodocs'],
   argTypes: {
     size: { control: { type: 'select' }, options: ['small', 'medium', 'large'] },
