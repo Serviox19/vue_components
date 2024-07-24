@@ -2,7 +2,8 @@
   <div class="storybook-wrapper">
     <div class="gallery" :class="classes" v-if="slides && slides.length > 0">
       <!-- Main Swiper -->
-      <swiper :slides-per-view="slidesPerView" :space-between="0" :modules="modules" v-bind="moduleProps()" @swiper="onSwiper" @slideChange="onSlideChange">
+      <swiper :slides-per-view="slidesPerView" :space-between="0" :modules="modules" v-bind="moduleProps()"
+        @swiper="onSwiper" @slideChange="onSlideChange" class="main-swiper">
         <swiper-slide v-for="(slide, idx) in slides" :key="idx">
           <img :src="slide.img" :alt="slide.title" />
         </swiper-slide>
@@ -25,9 +26,7 @@ import './index.css';
 
 // Import Swiper Vue.js components
 import { Swiper, SwiperSlide } from 'swiper/vue';
-import { Pagination } from 'swiper/modules';
-import { Thumbs } from 'swiper/modules';
-import { Navigation } from 'swiper/modules';
+import { Pagination, Navigation, Thumbs } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
 
@@ -116,12 +115,12 @@ export default {
     };
 
     const onSwiper = (swiper) => {
-      console.log(swiper);
+      //console.log(swiper);
       mainSwiper.value = swiper;
     };
 
     const onSlideChange = () => {
-      console.log('slide change');
+      //console.log('slide change');
     };
 
     const modulesToLoad = computed(() => {
@@ -154,25 +153,34 @@ export default {
 </script>
 
 <style scoped>
-/* Your component styles go here */
-.gallery {
-  position: relative;
-  width: 650px;
-}
 
-.gallery--thumbnail-left {
-  flex-direction: row;
-}
+  .gallery {
+    position: relative;
+    width: 650px;
+  }
 
-.swiper-slide img {
-  width: 100%;
-  height: auto;
-  object-fit: cover;
-}
+  .gallery--thumbnail-left {
+    flex-direction: row;
+  }
 
-.swiper-pagination {
-  bottom: 1rem;
-  left: 50%;
-  transform: translateX(-50%);
-}
+  .swiper-thumbs .swiper-slide {
+    width: 100%;
+    height: auto;
+  }
+
+  .swiper-thumbs .swiper-slide-thumb-active {
+    border: solid 1.5px;
+  }
+
+  .swiper-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .swiper-pagination {
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+  }
 </style>
