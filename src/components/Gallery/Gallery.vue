@@ -5,7 +5,10 @@
       <swiper :slides-per-view="slidesPerView" :space-between="0" :modules="modules" v-bind="moduleProps()"
         @swiper="onSwiper" @slideChange="onSlideChange" class="main-swiper">
         <swiper-slide v-for="(slide, idx) in slides" :key="idx">
-          <img :src="slide.img" :alt="slide.title" />
+          <div v-if="slide.type === 'video'">
+            <iframe width="560" :src="slide.src" frameborder="0" allowfullscreen></iframe>
+          </div>
+          <img v-else :src="slide.img" :alt="slide.title" />
         </swiper-slide>
         <div class="swiper-pagination" v-if="pagination"></div>
       </swiper>
@@ -13,7 +16,10 @@
       <swiper @swiper="setThumbsSwiper" :watchSlidesProgress="true" :spaceBetween="10" :slidesPerView="4.5"
         :grabCursor="true" :modules="Thumbs" v-if="thumbnails">
         <swiper-slide v-for="(slide, idx) in slides" :key="idx">
-          <img :src="slide.img" :alt="slide.title" />
+          <span class="swiper-slide-thumb-icon" v-if="slide.type === 'video'">
+            <img src="../../assets/play.svg" alt="play-icon">
+          </span>
+          <img :class="{ 'fade': slide.type === 'video' }" :src="slide.type === 'video' ? slide.poster : slide.img" :alt="slide.title" />
         </swiper-slide>
       </swiper>
     </div>
@@ -84,6 +90,13 @@ export default {
           title: "Slide Title",
           subtitle: "Example description for slide"
         },
+        {
+          type: "video",
+          poster: "https://picsum.photos/600/400?random=6",
+          src: "https://www.youtube.com/embed/9bZkp7q19f0?si=TVsct9WlGK7MpHW3",
+          title: "Slide Title",
+          subtitle: "Example description for slide"
+        }
       ],
     };
   },
@@ -135,6 +148,15 @@ export default {
       return modules;
     });
 
+    const getEmbedUrl = (url) => {
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+      const match = url.match(regExp);
+
+      return (match && match[2].length === 11)
+        ? match[2]
+        : null;
+    };
+
     return {
       classes: computed(() => ({
         'gallery--thumbnail-left': props.thumbnailPosition === 'left',
@@ -145,6 +167,7 @@ export default {
       moduleProps,
       thumbsSwiper,
       setThumbsSwiper,
+      getEmbedUrl,
       modules: modulesToLoad,
       swipe: props.swipeable,
     };
@@ -178,9 +201,30 @@ export default {
     object-fit: cover;
   }
 
+  .swiper-slide-thumb-icon img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    object-fit: unset;
+    z-index: 10;
+  }
+
+  .swiper-slide iframe {
+    width: 100%;
+    height: 400px;
+  }
+
   .swiper-pagination {
     bottom: 1rem;
     left: 50%;
     transform: translateX(-50%);
+  }
+
+  .fade {
+    opacity: 0.5;
+    z-index: 1;
   }
 </style>
