@@ -1,5 +1,6 @@
 // import { within, userEvent, expect } from '@storybook/test';
 import ProductGallery from '../components/Gallery/Gallery.vue';
+import productData from '../../public/slides.json';
 
 export default {
   title: 'Product/Gallery',
@@ -29,7 +30,8 @@ export const Default = {
     thumbnails: false,
     swipeable: true,
     pagination: true,
-    thumbnailPosition: "left"
+    thumbnailPosition: "left",
+    slides: productData,
   },
 };
 
@@ -39,5 +41,6 @@ export const Thumbs = {
     pagination: false,
     thumbnailPosition: 'left',
     swipeable: true,
+    slides: productData,
   },
 };

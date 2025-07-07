@@ -59,45 +59,15 @@ export default {
       type: Boolean,
       default: false,
     },
+    slides: {
+      type: Array,
+      default: () => ([]),
+    },
   },
   data() {
     return {
       activeSlide: 0,
       slidesPerView: 1,
-      slides: [
-        {
-          img: "https://picsum.photos/600/400?random=1",
-          title: "Slide Title",
-          subtitle: "Example description for slide"
-        },
-        {
-          img: "https://picsum.photos/600/400?random=2",
-          title: "Slide Title",
-          subtitle: "Example description for slide"
-        },
-        {
-          img: "https://picsum.photos/600/400?random=3",
-          title: "Slide Title",
-          subtitle: "Example description for slide"
-        },
-        {
-          img: "https://picsum.photos/600/400?random=4",
-          title: "Slide Title",
-          subtitle: "Example description for slide"
-        },
-        {
-          img: "https://picsum.photos/600/400?random=5",
-          title: "Slide Title",
-          subtitle: "Example description for slide"
-        },
-        {
-          type: "video",
-          poster: "https://picsum.photos/600/400?random=6",
-          src: "https://www.youtube.com/embed/9bZkp7q19f0?si=TVsct9WlGK7MpHW3",
-          title: "Slide Title",
-          subtitle: "Example description for slide"
-        }
-      ],
     };
   },
   emits: [''],
@@ -148,15 +118,6 @@ export default {
       return modules;
     });
 
-    const getEmbedUrl = (url) => {
-      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-      const match = url.match(regExp);
-
-      return (match && match[2].length === 11)
-        ? match[2]
-        : null;
-    };
-
     return {
       classes: computed(() => ({
         'gallery--thumbnail-left': props.thumbnailPosition === 'left',
@@ -167,7 +128,6 @@ export default {
       moduleProps,
       thumbsSwiper,
       setThumbsSwiper,
-      getEmbedUrl,
       modules: modulesToLoad,
       swipe: props.swipeable,
     };
