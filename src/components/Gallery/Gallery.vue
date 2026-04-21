@@ -6,7 +6,14 @@
         @swiper="onSwiper" @slideChange="onSlideChange" class="main-swiper">
         <swiper-slide v-for="(slide, idx) in slides" :key="idx">
           <div v-if="slide.type === 'video'">
-            <iframe width="560" :src="slide.src" frameborder="0" allowfullscreen></iframe>
+            <iframe
+              width="560"
+              :id="'gallery-yt-' + idx"
+              :src="embedSrc(slide.src)"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowfullscreen
+            />
           </div>
           <img v-else :src="slide.img" :alt="slide.title" />
         </swiper-slide>
@@ -19,7 +26,8 @@
           <span class="swiper-slide-thumb-icon" v-if="slide.type === 'video'">
             <img src="../../assets/play.svg" alt="play-icon">
           </span>
-          <img :class="{ 'fade': slide.type === 'video' }" :src="slide.type === 'video' ? slide.poster : slide.img" :alt="slide.title" />
+          <img :class="{ 'fade': slide.type === 'video' }" :src="slide.type === 'video' ? slide.poster : slide.img"
+            :alt="slide.title" />
         </swiper-slide>
       </swiper>
     </div>
@@ -27,7 +35,7 @@
 </template>
 
 <script>
-import { reactive, computed, ref } from 'vue';
+import { reactive, computed, ref, watch, onBeforeUnmount, nextTick } from 'vue';
 import './index.css';
 
 // Import Swiper Vue.js components
@@ -35,6 +43,65 @@ import { Swiper, SwiperSlide } from 'swiper/vue';
 import { Pagination, Navigation, Thumbs } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
+
+let youtubeApiPromise = null;
+
+function loadYouTubeIframeAPI() {
+  if (typeof window === 'undefined') {
+    return Promise.resolve();
+  }
+  if (window.YT && window.YT.Player) {
+    return Promise.resolve();
+  }
+  if (!youtubeApiPromise) {
+    youtubeApiPromise = new Promise((resolve) => {
+      const prev = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        if (typeof prev === 'function') {
+          prev();
+        }
+        resolve();
+      };
+      const existing = document.querySelector('script[src="https://www.youtube.com/iframe_api"]');
+      if (!existing) {
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        document.head.appendChild(tag);
+      }
+    });
+  }
+  return youtubeApiPromise;
+}
+
+function embedSrc(baseSrc) {
+  if (!baseSrc) {
+    return '';
+  }
+  try {
+    const u = new URL(baseSrc, window.location.href);
+    u.searchParams.set('enablejsapi', '1');
+    u.searchParams.set('origin', window.location.origin);
+    return u.toString();
+  } catch {
+    const sep = baseSrc.includes('?') ? '&' : '?';
+    return `${baseSrc}${sep}enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`;
+  }
+}
+
+function pauseYouTubeSlide(ytPlayers, slideIndex) {
+  const player = ytPlayers.get(slideIndex);
+  if (player && typeof player.pauseVideo === 'function') {
+    player.pauseVideo();
+    return;
+  }
+  const el = typeof document !== 'undefined' ? document.getElementById(`gallery-yt-${slideIndex}`) : null;
+  if (el?.contentWindow) {
+    el.contentWindow.postMessage(
+      JSON.stringify({ event: 'command', func: 'pauseVideo', args: '' }),
+      '*',
+    );
+  }
+}
 
 export default {
   name: 'ProductGallery',
@@ -66,15 +133,49 @@ export default {
   },
   data() {
     return {
-      activeSlide: 0,
       slidesPerView: 1,
     };
   },
-  emits: [''],
   setup(props) {
     props = reactive(props);
     const mainSwiper = ref(null);
     const thumbsSwiper = ref(null);
+    const lastSlideIndex = ref(0);
+    const ytPlayers = new Map();
+
+    const destroyAllPlayers = () => {
+      ytPlayers.forEach((p) => {
+        try {
+          p.destroy();
+        } catch {
+          /* noop */
+        }
+      });
+      ytPlayers.clear();
+    };
+
+    const initYoutubePlayers = async () => {
+      await loadYouTubeIframeAPI();
+      await nextTick();
+      if (!window.YT?.Player) {
+        return;
+      }
+      props.slides.forEach((slide, idx) => {
+        if (slide.type !== 'video' || ytPlayers.has(idx)) {
+          return;
+        }
+        const el = document.getElementById(`gallery-yt-${idx}`);
+        if (!el) {
+          return;
+        }
+        try {
+          const player = new window.YT.Player(el.id, {});
+          ytPlayers.set(idx, player);
+        } catch {
+          /* iframe may not be ready; retry on next slides update */
+        }
+      });
+    };
 
     const moduleProps = () => {
       const result = {};
@@ -97,14 +198,34 @@ export default {
       thumbsSwiper.value = swiper;
     };
 
-    const onSwiper = (swiper) => {
-      //console.log(swiper);
+    const onSwiper = async (swiper) => {
       mainSwiper.value = swiper;
+      lastSlideIndex.value = swiper.activeIndex;
+      destroyAllPlayers();
+      await initYoutubePlayers();
     };
 
-    const onSlideChange = () => {
-      //console.log('slide change');
+    const onSlideChange = (swiper) => {
+      const next = swiper.activeIndex;
+      const prev = lastSlideIndex.value;
+      if (prev !== next && props.slides[prev]?.type === 'video') {
+        pauseYouTubeSlide(ytPlayers, prev);
+      }
+      lastSlideIndex.value = next;
     };
+
+    watch(
+      () => props.slides.map((s) => (s.type === 'video' ? s.src : s.img)),
+      async () => {
+        destroyAllPlayers();
+        await nextTick();
+        await initYoutubePlayers();
+      },
+    );
+
+    onBeforeUnmount(() => {
+      destroyAllPlayers();
+    });
 
     const modulesToLoad = computed(() => {
       const modules = [];
@@ -130,6 +251,7 @@ export default {
       setThumbsSwiper,
       modules: modulesToLoad,
       swipe: props.swipeable,
+      embedSrc,
     };
   },
 };
