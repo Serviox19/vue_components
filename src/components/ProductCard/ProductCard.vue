@@ -12,7 +12,7 @@
         <h2 class="product-card__title">{{ cardTitle }}</h2>
         <div class="product-card__actions">
           <!-- variant chips-->
-          <div class="product-card__variants">
+          <div :class="['product-card__variants', variantSelector]" v-if="variantSelector === 'swatch'">
             <button
               class="product-card__variant-chip"
               v-for="variant in product.variants"
@@ -22,6 +22,31 @@
               :style="{ backgroundColor: getSwatchColor(variant) }"
               :aria-label="variant.title"
             ></button>
+          </div>
+          <div :class="['product-card__variants', variantSelector]" v-else-if="variantSelector === 'select'">
+            <div class="custom-select" ref="customSelect">
+              <div class="custom-select__trigger" ref="trigger" @click="toggleDropdown">
+                <span class="custom-select__swatch" :style="{ backgroundColor: getSwatchColor(selectedVariant) }"></span>
+                <span class="custom-select__label">{{ selectedVariant.title }}</span>
+                <span class="custom-select__arrow" :class="{ 'open': isDropdownOpen }"></span>
+              </div>
+              <div
+                class="custom-select__options"
+                v-if="isDropdownOpen"
+                :style="dropdownStyle"
+              >
+                <div
+                  class="custom-select__option"
+                  v-for="variant in product.variants"
+                  :key="variant.id"
+                  :class="{ 'selected': selectedVariantId === variant.id }"
+                  @click="selectVariantFromDropdown(variant)"
+                >
+                  <span class="custom-select__swatch" :style="{ backgroundColor: getSwatchColor(variant) }"></span>
+                  <span class="custom-select__label">{{ variant.title }}</span>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="product-card__actions-wrapper">
             <!-- qty-->
@@ -62,14 +87,37 @@ export default {
       type: Object,
       required: true,
     },
+    variantSelector: {
+      type: String,
+      required: false,
+      default: 'swatch',
+    }
   },
   data() {
     return {
-      selectedVariant: this.product.variants[0],
-      quantity: 1
+      selectedVariantId: this.product.variants[0].id,
+      quantity: 1,
+      isDropdownOpen: false,
+      dropdownPosition: { top: 0, left: 0, width: 0 }
     };
   },
+  mounted() {
+    document.addEventListener('click', this.handleClickOutside);
+  },
+  beforeUnmount() {
+    document.removeEventListener('click', this.handleClickOutside);
+  },
   computed: {
+    selectedVariant() {
+      return this.product.variants.find(v => v.id === this.selectedVariantId);
+    },
+    dropdownStyle() {
+      return {
+        top: `${this.dropdownPosition.top}px`,
+        left: `${this.dropdownPosition.left}px`,
+        width: `${this.dropdownPosition.width}px`
+      };
+    },
     imageUrl() {
       if (this.selectedVariantImage) {
         return this.selectedVariantImage;
@@ -96,8 +144,30 @@ export default {
     }
   },
   methods: {
+    toggleDropdown() {
+      this.isDropdownOpen = !this.isDropdownOpen;
+      if (this.isDropdownOpen && this.$refs.trigger) {
+        this.$nextTick(() => {
+          const rect = this.$refs.trigger.getBoundingClientRect();
+          this.dropdownPosition = {
+            top: rect.bottom + 4,
+            left: rect.left,
+            width: rect.width
+          };
+        });
+      }
+    },
+    selectVariantFromDropdown(variant) {
+      this.selectedVariantId = variant.id;
+      this.isDropdownOpen = false;
+    },
     selectVariant(variant) {
-      this.selectedVariant = variant;
+      this.selectedVariantId = variant.id;
+    },
+    handleClickOutside(event) {
+      if (this.$refs.customSelect && !this.$refs.customSelect.contains(event.target)) {
+        this.isDropdownOpen = false;
+      }
     },
     getSwatchColor(variant) {
       const name = (variant.title || variant.option1 || '').toLowerCase().trim();
